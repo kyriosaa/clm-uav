@@ -1,0 +1,107 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #0f172a; /* Dark background suited for an IoT dashboard */
+  color: #f8fafc;
+}
+
+/* Viewer layout */
+.viewer-outer {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer-inner {
+  position: relative;
+  width: min(95vw, 1000px);
+  height: min(80vh, 800px);
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(2,6,23,0.6);
+}
+
+.viewer-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.view-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(255,255,255,0.04);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.controls-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #fff;
+}
+
+.controls-panel label {
+  font-size: 12px;
+}
+
+.control-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+button {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: rgba(255,255,255,0.09);
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #0f172a; 
+  color: #f8fafc;
+}
+
+.telemetry {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 10;
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: flex;
+  gap: 12px;
+}
+
+.telemetry .item {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.telemetry .label {
+  opacity: 0.8;
+  font-size: 11px;
+}
+
+.telemetry .value {
+  font-weight: 600;
+}
