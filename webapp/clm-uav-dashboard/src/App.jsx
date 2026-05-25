@@ -15,7 +15,7 @@ function Model({ rotation = [0, 0, 0] }) {
 
 export default function App() {
 
-  const initialPitchOffset = -50;
+  const initialPitchOffset = 0;
   const [pitch, setPitch] = useState(0);
   const [yaw, setYaw] = useState(0);
   const [roll, setRoll] = useState(0);
@@ -43,8 +43,6 @@ export default function App() {
             <input type="range" min={-180} max={180} value={pitch} onChange={(e) => setPitch(Number(e.target.value))} />
             <label>Yaw (Y): {yaw}°</label>
             <input type="range" min={-180} max={180} value={yaw} onChange={(e) => setYaw(Number(e.target.value))} />
-            <label>Roll (Z): {roll}°</label>
-            <input type="range" min={-180} max={180} value={roll} onChange={(e) => setRoll(Number(e.target.value))} />
             <div className="control-row">
               <button onClick={resetRotations}>Reset</button>
             </div>
@@ -58,7 +56,6 @@ export default function App() {
             <Model rotation={[toRad(pitch + initialPitchOffset), toRad(yaw), toRad(roll)]} />
           </Suspense>
 
-          // Lock camera controls to prevent user interaction
           <OrbitControls
             enableZoom={false}
             enableRotate={false}
