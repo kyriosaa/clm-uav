@@ -23,6 +23,7 @@ try:
     mpu = MPU6050(0, 8, 9)
     bmp = BMP280(i2c)
     ina = INA219(i2c)
+    ina.set_calibration_16V_400mA()
     lox = VL53L0X(i2c)
     print("All sensors initialized successfully.")
 except Exception as e:
@@ -39,12 +40,12 @@ while True:
         temp = bmp.temperature
         pressure = bmp.pressure
         
-        laser_dist = lox.read()
+        laser_dist = lox.range
         
         # rn the battery isnt connected so these should output something near zero
-        voltage = ina.voltage()
-        current = ina.current()
-        power = ina.power()
+        voltage = ina.bus_voltage
+        current = ina.current
+        power = voltage * current
         
         # build JSON payload
         payload = {
