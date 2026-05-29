@@ -15,7 +15,7 @@ Cloud-Monitored UAV System
 
 ## System Architecture
 
-asdf
+<img src="./schematic/clm_uav.svg">
 
 ## Features
 

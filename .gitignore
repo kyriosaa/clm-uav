@@ -1,3 +1,5 @@
 secrets.h
 .history
 *backups
+*.lck
+.kicad_prl

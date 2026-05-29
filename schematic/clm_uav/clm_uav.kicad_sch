@@ -3505,7 +3505,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
 			(at 154.94 161.29 0)
 			(hide yes)
 			(show_name no)
@@ -4197,7 +4197,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_Slide_SPDT_Angled_CK_OS102011MA1Q"
 			(at 134.62 46.99 0)
 			(hide yes)
 			(show_name no)
@@ -4358,7 +4358,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical"
 			(at 152.4 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -4731,7 +4731,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
 			(at 152.4 127 0)
 			(hide yes)
 			(show_name no)
@@ -4902,7 +4902,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
 			(at 152.4 34.29 0)
 			(hide yes)
 			(show_name no)
