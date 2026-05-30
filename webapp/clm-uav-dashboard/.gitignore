@@ -12,6 +12,23 @@ dist
 dist-ssr
 *.local
 
+# Ignore generated agents folder
+.agents/
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Vite cache
+.vite/
+
+# Firebase emulator and debug files
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*
+emulator-data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
