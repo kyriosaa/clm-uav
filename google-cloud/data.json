@@ -1,0 +1,12 @@
+
+{
+    "timestamp": 1715346000,
+    "voltage": 11.1,
+    "percentage": 85,
+
+    "pitch": 12.5,
+    "roll": -3.2,
+    "yaw": 180.0,
+
+    "temperature": 26.5
+}

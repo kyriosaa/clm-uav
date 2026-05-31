@@ -29,6 +29,14 @@ firebase-debug.log*
 firebase-debug.*.log*
 emulator-data/
 
+# Certificates
+google-cloud/Certificates/
+google-cloud/Certificates/*
+**/Certificates/
+**/Certificates/*
+**/certs/
+**/certs/*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
