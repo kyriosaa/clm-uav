@@ -56,3 +56,11 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Certificates
+google-cloud/Certificates/
+google-cloud/Certificates/*
+**/Certificates/
+**/Certificates/*
+**/certs/
+**/certs/*

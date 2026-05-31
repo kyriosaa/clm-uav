@@ -3,3 +3,13 @@ secrets.h
 *backups
 *.lck
 .kicad_prl
+
+# Ignore local secrets
+google-cloud/Certificates/
+google-cloud/Certificates/*
+
+# Ignore any certificates folders (common names)
+**/Certificates/
+**/Certificates/*
+**/certs/
+**/certs/*
