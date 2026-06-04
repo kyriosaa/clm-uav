@@ -1,8 +1,10 @@
 import machine
 import time
 import ujson
+import network
+from simple import MQTTClient
+import private
 
-# Ensure these driver files are uploaded to your Pico's root directory
 from mpu6050 import MPU6050
 from bmp280 import BMP280
 from ina219 import INA219
@@ -28,6 +30,35 @@ try:
     print("All sensors initialized successfully.")
 except Exception as e:
     print("Sensor initialization failed:", e)
+
+# connect to Wi-Fi
+print("Connecting to Wi-Fi...")
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect(private.WIFI_SSID, private.WIFI_PASS)
+while not wlan.isconnected():
+    time.sleep(1)
+print("Wi-Fi connected! IP:", wlan.ifconfig()[0])
+
+# connect to MQTT broker
+print("Connecting to MQTT broker...")
+try:
+    # load client certs for mTLS
+    with open(private.MQTT_KEY, 'rb') as f:
+        key_data = f.read()
+    with open(private.MQTT_CERT, 'rb') as f:
+        cert_data = f.read()
+        
+    ssl_params = {
+        "key": key_data,
+        "cert": cert_data,
+        "server_hostname": private.MQTT_BROKER
+    }
+    mqtt_client = MQTTClient(private.MQTT_CLIENT_ID, private.MQTT_BROKER, port=private.MQTT_PORT, keepalive=60, ssl=True, ssl_params=ssl_params)
+    mqtt_client.connect()
+    print("MQTT connected successfully!")
+except Exception as e:
+    print("MQTT connection failed:", e)
 
 # main loop
 while True:
@@ -69,6 +100,12 @@ while True:
         # print to serial
         json_data = ujson.dumps(payload)
         print(json_data)
+        
+        # publish to MQTT
+        try:
+            mqtt_client.publish(private.MQTT_TOPIC, json_data)
+        except Exception as e:
+            print("MQTT publish failed:", e)
         
         # 10Hz
         time.sleep(0.1) 

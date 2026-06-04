@@ -1,14 +1,14 @@
-secrets.h
+private.py
 .history
 *backups
 *.lck
 .kicad_prl
 
-# Ignore local secrets
+# ignore local secrets
 google-cloud/Certificates/
 google-cloud/Certificates/*
 
-# Ignore any certificates folders (common names)
+# ignore any certificates folders (common names)
 **/Certificates/
 **/Certificates/*
 **/certs/
