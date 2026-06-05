@@ -1,26 +1,34 @@
 import machine
 import time
 import ujson
+import network
+import ntptime  
+import gc       
+from simple import MQTTClient
+import private
 
-# Ensure these driver files are uploaded to your Pico's root directory
 from mpu6050 import MPU6050
 from bmp280 import BMP280
 from ina219 import INA219
 from vl53l0x import VL53L0X
+time.sleep(0.1)
 
-# init I2C0 on GP8 (SDA) and GP9 (SCL)
-i2c = machine.I2C(0, sda=machine.Pin(8), scl=machine.Pin(9), freq=400000)
+# internal pull-ups
+sda_pin = machine.Pin(8, pull=machine.Pin.PULL_UP)
+scl_pin = machine.Pin(9, pull=machine.Pin.PULL_UP)
+
+i2c = machine.I2C(0, sda=sda_pin, scl=scl_pin, freq=1000000)
 
 print("Scanning I2C bus...")
 devices = i2c.scan()
 if not devices:
-    print("Error: No I2C devices found! Check your wiring.")
+    print("Error: No I2C devices found.")
 else:
     print("Found devices at hex addresses:", [hex(d) for d in devices])
 
 # init sensors
 try:
-    mpu = MPU6050(0, 8, 9)
+    mpu = MPU6050(0, 8, 9, freq=100000)
     bmp = BMP280(i2c)
     ina = INA219(i2c)
     ina.set_calibration_16V_400mA()
@@ -29,10 +37,75 @@ try:
 except Exception as e:
     print("Sensor initialization failed:", e)
 
+# connect to wifi
+print("Connecting to Wi-Fi...")
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect(private.WIFI_SSID, private.WIFI_PASS)
+while not wlan.isconnected():
+    time.sleep(1)
+print("Wi-Fi connected! IP:", wlan.ifconfig()[0])
+
+# sync RTC via NTP before attempting TLS connection
+print("Syncing time via NTP...")
+try:
+    ntptime.settime()
+    print("Time set successfully.")
+except Exception as e:
+    print("Failed to sync time:", e)
+
+def connect_mqtt():
+    print("Connecting to MQTT broker...")
+    try:
+        # load client certs for mTLS
+        with open(private.MQTT_KEY, 'rb') as f:
+            key_data = f.read()
+        with open(private.MQTT_CERT, 'rb') as f:
+            cert_data = f.read()
+        with open(private.MQTT_CA, 'rb') as f:
+            ca_data = f.read()
+            
+        ssl_params = {
+            "key": key_data,
+            "cert": cert_data,
+            "server_hostname": private.MQTT_BROKER,
+            "cadata": ca_data,
+            "cert_reqs": 2
+        }
+        client = MQTTClient(
+            private.MQTT_CLIENT_ID, 
+            private.MQTT_BROKER, 
+            port=private.MQTT_PORT, 
+            keepalive=60, 
+            ssl=True, 
+            ssl_params=ssl_params
+        )
+        
+        # force garbage collection to free up contiguous RAM for the SSL handshake
+        gc.collect() 
+        client.connect()
+        print("MQTT connected successfully!")
+        return client
+    except Exception as e:
+        print("MQTT connection failed:", e)
+        raise e
+
+mqtt_client = None
+try:
+    mqtt_client = connect_mqtt()
+except Exception as e:
+    pass
+
 # main loop
 while True:
     try:
-        # the OneMadGypsy driver returns a tuple of (roll, pitch) directly
+        if not wlan.isconnected():
+            print("Wi-Fi connection lost! Reconnecting...")
+            wlan.connect(private.WIFI_SSID, private.WIFI_PASS)
+            while not wlan.isconnected():
+                time.sleep(1)
+            print("Wi-Fi reconnected! IP:", wlan.ifconfig()[0])
+
         roll_pitch = mpu.angles
         pitch = roll_pitch[1]
         roll = roll_pitch[0]
@@ -42,7 +115,6 @@ while True:
         
         laser_dist = lox.range
         
-        # rn the battery isnt connected so these should output something near zero
         voltage = ina.bus_voltage
         current = ina.current
         power = voltage * current
@@ -66,13 +138,32 @@ while True:
             }
         }
         
-        # print to serial
         json_data = ujson.dumps(payload)
-        print(json_data)
+        print("Publishing:", json_data)
         
-        # 10Hz
-        time.sleep(0.1) 
+        # publish to MQTT
+        try:
+            if mqtt_client is None:
+                raise Exception("Client not initialized")
+            mqtt_client.publish(private.MQTT_TOPIC, json_data)
+        except Exception as e:
+            print("MQTT publish failed:", e)
+            print("Attempting to reconnect to MQTT...")
+            try:
+                try:
+                    if mqtt_client is not None:
+                        mqtt_client.disconnect()
+                except:
+                    pass 
+                
+                gc.collect() 
+                mqtt_client = connect_mqtt()
+            except Exception as rc_err:
+                print("MQTT reconnect failed:", rc_err)
+                time.sleep(2) 
+    
+        time.sleep(2.0) 
         
     except Exception as e:
         print("Read error:", e)
-        time.sleep(1)
+        time.sleep(2)
