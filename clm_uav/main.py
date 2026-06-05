@@ -11,20 +11,24 @@ from mpu6050 import MPU6050
 from bmp280 import BMP280
 from ina219 import INA219
 from vl53l0x import VL53L0X
+time.sleep(0.1)
 
-# init I2C0 on GP8 (SDA) and GP9 (SCL)
-i2c = machine.I2C(0, sda=machine.Pin(8), scl=machine.Pin(9), freq=400000)
+# internal pull-ups
+sda_pin = machine.Pin(8, pull=machine.Pin.PULL_UP)
+scl_pin = machine.Pin(9, pull=machine.Pin.PULL_UP)
+
+i2c = machine.I2C(0, sda=sda_pin, scl=scl_pin, freq=1000000)
 
 print("Scanning I2C bus...")
 devices = i2c.scan()
 if not devices:
-    print("Error: No I2C devices found! Check your wiring.")
+    print("Error: No I2C devices found.")
 else:
     print("Found devices at hex addresses:", [hex(d) for d in devices])
 
 # init sensors
 try:
-    mpu = MPU6050(0, 8, 9)
+    mpu = MPU6050(0, 8, 9, freq=100000)
     bmp = BMP280(i2c)
     ina = INA219(i2c)
     ina.set_calibration_16V_400mA()
@@ -58,7 +62,7 @@ def connect_mqtt():
             key_data = f.read()
         with open(private.MQTT_CERT, 'rb') as f:
             cert_data = f.read()
-        with open('ca.crt', 'rb') as f:
+        with open(private.MQTT_CA, 'rb') as f:
             ca_data = f.read()
             
         ssl_params = {
@@ -157,8 +161,7 @@ while True:
             except Exception as rc_err:
                 print("MQTT reconnect failed:", rc_err)
                 time.sleep(2) 
-        
-        # 0.5Hz
+    
         time.sleep(2.0) 
         
     except Exception as e:
