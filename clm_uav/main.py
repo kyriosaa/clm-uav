@@ -17,7 +17,7 @@ time.sleep(0.1)
 sda_pin = machine.Pin(8, pull=machine.Pin.PULL_UP)
 scl_pin = machine.Pin(9, pull=machine.Pin.PULL_UP)
 
-i2c = machine.I2C(0, sda=sda_pin, scl=scl_pin, freq=1000000)
+i2c = machine.I2C(0, sda=sda_pin, scl=scl_pin, freq=400000)
 
 print("Scanning I2C bus...")
 devices = i2c.scan()
@@ -162,7 +162,7 @@ while True:
                 print("MQTT reconnect failed:", rc_err)
                 time.sleep(2) 
     
-        time.sleep(2.0) 
+        # time.sleep(2.0) 
         
     except Exception as e:
         print("Read error:", e)
