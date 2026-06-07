@@ -1,3 +1,5 @@
+<img src="./images/cover.JPG">
+
 # CLM-UAV
 
 <!-- badges here later -->
@@ -26,3 +28,14 @@ asdf
 asdf
 
 ## Images
+
+<img src="./images/drone_frame.JPG">
+<img src="./images/top_solder.JPG">
+<img src="./images/top_placement.JPG">
+<img src="./images/battery.JPG">
+<img src="./images/duo_placement.JPG">
+<img src="./images/duo_solder.JPG">
+<img src="./images/bottom_placement.JPG">
+<img src="./images/bottom_solder.JPG">
+<img src="./images/workshop.JPG">
+<img src="./images/switch.JPG">
