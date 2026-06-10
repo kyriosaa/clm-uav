@@ -1,18 +1,24 @@
-rules_version='2'
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 6, 28);
+
+    // sensor collection: clients may read when authenticated.
+    // Clients MUST NOT be allowed to write here.
+    // The ingestion bridge (VM) should write using the Admin SDK with a
+    // service account. Admin SDK calls bypass security rules, so the VM can
+    // continue writing even though client writes are denied.
+    match /sensor/{docId} {
+      allow read: if request.auth != null;
+      // Prevent client-side writes. Use Admin SDK on the server/VM instead.
+      allow write: if false;
     }
+
+    // Optional: a users collection where each user can manage their own doc
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Deny everything else by default (no wildcard permissive rules).
   }
 }

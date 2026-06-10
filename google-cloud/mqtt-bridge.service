@@ -1,0 +1,20 @@
+[Unit]
+Description=MQTT to Firestore Bridge Service
+After=network.target mosquitto.service
+
+[Service]
+Type=simple
+# Ensure Python logs things instantly in real-time
+Environment=PYTHONUNBUFFERED=1
+# The user account running the script
+User=milanesser9000
+# The directory where your script lives
+WorkingDirectory=/home/milanesser9000/mqtt-to-firestore
+# The exact command to start your script
+ExecStart=/home/milanesser9000/mqtt-to-firestore/venv/bin/python3 /home/milanesser9000/mqtt-to-firestore/bridge.py
+# Automatically restart the script if it crashes
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

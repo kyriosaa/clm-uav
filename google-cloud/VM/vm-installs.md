@@ -40,14 +40,41 @@ nano bridge.py
 
 5. add code from firestore bridge
 
-6. make it run in the background
+### make it run in the background
 
-VM-IP: 34.80.108.11
+sudo nano /etc/systemd/system/mqtt-bridge.service
 
-mosquitto_pub -h 34.80.108.11 -p 8883 \
+
+Paste Service Configuration
+
+1. Reload systemd to recognize your new file
+sudo systemctl daemon-reload
+
+2. Enable it to survive reboots
+sudo systemctl enable mqtt-bridge.service
+
+3. Start it right now
+sudo systemctl start mqtt-bridge.service
+
+4. Check if running smoothly
+sudo systemctl status mqtt-bridge.service
+
+5. See live console logs / print statements:
+
+sudo journalctl -u mqtt-bridge.service -f
+6. Restart it (after editing your code):
+
+sudo systemctl restart mqtt-bridge.service
+
+
+VM-IP: 34.80.73.148
+
+!Reminder make the ip static
+
+mosquitto_pub -h mqtts-bridge.duckdns.org -p 8883 \
   --cafile CA/ca.crt \
   --cert mac-client/mac_client.crt \
   --key mac-client/mac_client.key \
   -t "sensor/data" \
-  -m '{"battery": 88, "altitude": 120.5, "speed": 45.2, "status": "flying"}' \
+  -m '{"environment": {"temp_c": 29.01, "pressure_pa": 100340.42, "agl_laser_mm": 20}, "attitude": {"roll": 2.0421352, "pitch": 0.719337636}, "power": {"voltage_v": 4.704, "current_ma": 0.0, "power_mw": 0.0}, "timestamp": 1278722}' \
   --insecure -d
