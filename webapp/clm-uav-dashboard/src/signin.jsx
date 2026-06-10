@@ -18,10 +18,8 @@ export default function SignInVisual() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      window.location.href = '/';
     } catch (err) {
       setError(err.message || 'Error signing in');
-      setLoading(false);
     }
   };
 
