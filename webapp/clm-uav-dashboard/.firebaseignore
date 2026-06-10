@@ -1,0 +1,47 @@
+# Firebase ignore for clm-uav-dashboard
+
+# Node / build
+node_modules/
+dist/
+build/
+.vite/
+
+# Local env files (don't deploy secrets)
+.env
+.env.*
+.env.local
+
+# Firebase emulator / debug files
+.firebase/
+firebase-debug.log*
+emulator-data/
+
+# local generated agents (do not deploy)
+.agents/
+
+# Certificates and keys (do NOT deploy)
+google-cloud/Certificates/
+google-cloud/Certificates/**
+**/Certificates/
+**/Certificates/**
+**/certs/
+**/certs/**
+*.key
+*.pem
+*.crt
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.local
+
+# Source not needed for hosting bundle
+src/
+
+# Misc
+firebase.json
+.git
+
+# Keep public assets that are in the built `dist/` folder only
+
