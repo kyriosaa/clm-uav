@@ -1,19 +1,46 @@
-import React, { Suspense, useState, useEffect } from 'react';
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
+import { Canvas, useLoader, useThree } from '@react-three/fiber';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { auth } from './firebase.js';
 import { useSensorData } from './sensordata.jsx';
 import { signOut } from 'firebase/auth';
 
-function Model({ rotation = [0, 0, 0] }) {
-  const geometry = useLoader(STLLoader, '/golbin_drone_body.stl');
+const SCALE = 300;
 
+function Model({ rotation = [0, 0, 0], position = [0, 0, 0] }) {
+  const geometry = useLoader(STLLoader, '/golbin_drone_body.stl');
   return (
-    <mesh geometry={geometry} rotation={rotation}>
-      <meshStandardMaterial color="royalblue" roughness={0.3} />
+    <mesh geometry={geometry} rotation={rotation} position={position}>
+      {/* Lambert: cheaper per-pixel lighting than meshStandardMaterial */}
+      <meshLambertMaterial color="royalblue" />
     </mesh>
   );
+}
+
+function CameraRig({ view }) {
+  const { camera, invalidate } = useThree();
+  useEffect(() => {
+    if (view === 'top') {
+      camera.position.set(0, 0, 250);
+      camera.up.set(0, 1, 0);
+    } else {
+      camera.position.set(0, -200, 100);
+      camera.up.set(0, 0, 1);
+    }
+    camera.lookAt(0, 0, 0);
+    invalidate();
+  }, [view, camera, invalidate]);
+  return null;
+}
+
+// Isolated clock so its 1s tick re-renders only itself, not the whole App + Canvas
+function Clock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <div className="top-left-clock">{now.toLocaleString('en-US')}</div>;
 }
 
 export default function App() {
@@ -21,12 +48,21 @@ export default function App() {
   const [pitch, setPitch] = useState(0);
   const [roll, setRoll] = useState(0);
   const [yaw, setYaw] = useState(0);
-
-  // Dynamic Altimeter / Environment States
-  const [altitude, setAltitude] = useState(0);
   const [ground, setGround] = useState(0);
-  const [proximity, setProximity] = useState(0);
   const [battery, setBattery] = useState(0);
+  const [temperature, setTemperature] = useState(0);
+  const [pressure, setPressure] = useState(0);
+
+  const [view, setView] = useState('side');
+
+  const smoothPitch = useRef(0);
+  const smoothRoll = useRef(0);
+
+  // Last committed values — used to skip imperceptible state updates
+  const lastPitch = useRef(0);
+  const lastRoll = useRef(0);
+  const lastYaw = useRef(0);
+  const lastGround = useRef(0);
 
   const handleSignOut = async () => {
     try {
@@ -60,11 +96,12 @@ export default function App() {
       filteredLaserMM = 20; // Pin to nominal baseline state inside dead zone
     }
     const currentProximityMeters = Number(filteredLaserMM) / 1000;
-    setProximity(currentProximityMeters);
 
-    // Deriving Altitude and Ground clearance variables based on Laser feedback
-    setAltitude(currentProximityMeters);
-    setGround(Math.max(0, 2.5 - currentProximityMeters)); // Simulated distance to landing pad deck
+    // Only commit ground if it moved more than 1mm — skips noise renders
+    if (Math.abs(currentProximityMeters - lastGround.current) > 0.001) {
+      lastGround.current = currentProximityMeters;
+      setGround(currentProximityMeters);
+    }
 
     // 3. Process MPU6050 Orientation with Dead Zones (+/- 2 degrees window)
     let rawRoll = sourceData.attitude?.roll ?? 0;
@@ -73,69 +110,104 @@ export default function App() {
     if (rawRoll >= -2 && rawRoll <= 2) rawRoll = 0;
     if (rawPitch >= -2 && rawPitch <= 2) rawPitch = 0;
 
-    setPitch(rawRoll); 
-    setRoll(rawPitch);
-    setYaw(sourceData.attitude?.yaw ?? 0);
+    const alpha = 0.4; // 0 = frozen, 1 = no smoothing. Lower = smoother but laggier.
 
+    smoothRoll.current = smoothRoll.current + alpha * (rawRoll - smoothRoll.current);
+    smoothPitch.current = smoothPitch.current + alpha * (rawPitch - smoothPitch.current);
+
+    // Only commit angles if they changed by more than 0.1° — skips jitter renders.
+    // NOTE: pitch/roll are intentionally cross-wired (your sensor layout).
+    if (Math.abs(smoothRoll.current - lastPitch.current) > 0.1) {
+      lastPitch.current = smoothRoll.current;
+      setPitch(smoothRoll.current);
+    }
+    if (Math.abs(smoothPitch.current - lastRoll.current) > 0.1) {
+      lastRoll.current = smoothPitch.current;
+      setRoll(smoothPitch.current);
+    }
+
+    const rawYaw = sourceData.attitude?.yaw ?? 0;
+    if (Math.abs(rawYaw - lastYaw.current) > 0.1) {
+      lastYaw.current = rawYaw;
+      setYaw(rawYaw);
+    }
+
+    if (sourceData.environment?.temp_c !== undefined) {
+      setTemperature(sourceData.environment.temp_c);
+    }
+    if (sourceData.environment?.pressure_pa !== undefined) {
+      setPressure(sourceData.environment.pressure_pa / 100); // Pa -> hPa
+    }
+    if (sourceData.power?.voltage_v !== undefined) {
+      setBattery(sourceData.power.voltage_v);
+    }
   }, [liveItems]);
-  
-  // Dashboard System Clock
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
 
   return (
     <div className="viewer-outer">
       <div className="logout-top">
         <button onClick={handleSignOut}>Logout</button>
       </div>
-      
+
       <div className="viewer-inner">
-        <div className="top-left-clock">{now.toLocaleString('en-US')}</div>
-        
+        <Clock />
+
         <div className="view-controls">
           <div className="controls-panel">
-            {/* Displaying angle with a maximum of 1 decimal place */}
-            <label>Pitch Angle: {pitch.toFixed(1)}°</label>
+            <button onClick={() => setView(view === 'side' ? 'top' : 'side')}>
+              Change View
+            </button>
+            <label>Pitch: {pitch.toFixed(1)}°</label>
             <input type="range" min={-180} max={180} value={pitch} readOnly tabIndex={-1} />
-            
-            {/* Displaying angle with a maximum of 1 decimal place */}
-            <label>Roll Angle: {roll.toFixed(1)}°</label>
+
+            <label>Roll: {roll.toFixed(1)}°</label>
             <input type="range" min={-180} max={180} value={roll} readOnly tabIndex={-1} />
           </div>
         </div>
 
-        <Canvas className="viewer-canvas" camera={{ position: [0, 0, 5], fov: 50 }}>
+        <Canvas
+          className="viewer-canvas"
+          frameloop="demand"
+          dpr={[1, 1.5]}
+          gl={{ powerPreference: 'high-performance' }}
+          camera={{ position: [0, 0, 250], fov: 50, near: 0.1, far: 1000 }}
+        >
           <color attach="background" args={["#0f172a"]} />
           <ambientLight intensity={0.8} />
           <directionalLight position={[10, 10, 5]} intensity={1.2} />
+          <group position={[0, 0, -40 - ground * SCALE]}>
+            <gridHelper
+              args={[2000, 30, "#2d5016", "#3a6b1c"]}
+              rotation={[Math.PI / 2, 0, 0]}
+            />
+            <mesh position={[0, 0, -1]}>
+              <planeGeometry args={[2000, 2000]} />
+              <meshLambertMaterial color="#234d0f" />
+            </mesh>
+          </group>
+
           <Suspense fallback={null}>
-            {/* rotation maps pitch to x axis and roll to y axis to follow your exact sensor layout physics */}
-            <Model rotation={[toRad(pitch), toRad(roll), toRad(yaw)]} />
+            <CameraRig view={view} />
+            <Model rotation={[toRad(pitch), toRad(roll), toRad(yaw) + Math.PI]} />
           </Suspense>
-          <OrbitControls enableZoom={false} enableRotate={false} enablePan={false} minDistance={200} maxDistance={200} />
         </Canvas>
 
-        {/* All telemetry values updated to output exactly 1 decimal place (.toFixed(1)) */}
-        {/* All telemetry values updated to output exactly 3 decimal places for high-precision meter metrics */}
         <div className="telemetry">
-          <div className="item">
-            <span className="label">Altitude</span>
-            <span className="value">{altitude.toFixed(3)} m</span>
-          </div>
           <div className="item">
             <span className="label">Ground</span>
             <span className="value">{ground.toFixed(3)} m</span>
           </div>
           <div className="item">
-            <span className="label">Proximity</span>
-            <span className="value">{proximity.toFixed(3)} m</span>
+            <span className="label">Temperature</span>
+            <span className="value">{temperature.toFixed(1)} °C</span>
           </div>
           <div className="item">
-            <span className="label">Battery Voltage</span>
-            <span className="value">{battery.toFixed(1)} V</span>
+            <span className="label">Pressure</span>
+            <span className="value">{pressure.toFixed(1)} hPa</span>
+          </div>
+          <div className="item">
+            <span className="label">Voltage</span>
+            <span className="value">{battery.toFixed(2)} V</span>
           </div>
         </div>
       </div>
