@@ -18,10 +18,6 @@ function transformDocs(snapshot) {
   });
 }
 
-/**
- * HOOK FOR LIVE DASHBOARD
- * Listens to the absolute newest record in the background for real-time 3D viewing.
- */
 export function useSensorData(max = 1) {
   const [items, setItems] = useState([]);
 
@@ -32,8 +28,7 @@ export function useSensorData(max = 1) {
     if (internalId === '(default)') return;
 
     const colRef = collection(db, 'sensor');
-    // Using default automatic document ID ordering to stream the latest packet instantly
-    const q = query(colRef, orderBy('__name__', 'desc'), limit(max));
+    const q = query(colRef, orderBy('timestamp', 'desc'), limit(max));
 
     const unsub = onSnapshot(
       q,
