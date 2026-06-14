@@ -17,3 +17,6 @@ google-cloud/Certificates/*
 *.crt
 *.key
 *.der
+
+# report folder
+report/
