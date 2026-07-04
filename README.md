@@ -62,11 +62,15 @@ This project emphasizes secure IoT & Cloud communication. The Raspberry Pi Pico 
 | **TP4056 LiPo Charger Module** | Offers battery charging & additional  safety functions |
 | **3.7V Lithium Polymer Battery** | System power source |
 
+You can get the STL file for the drone body [here](https://www.printables.com/model/396395-goblin-fpv-drone).
+
 ## Electrical Schematic
 
 <img src="./schematic/clm_uav.svg">
 
 ## Images
+
+**Hardware** 
 
 > Component placement for the top board
 > <img src="./images/top_placement.JPG">
@@ -86,3 +90,20 @@ This project emphasizes secure IoT & Cloud communication. The Raspberry Pi Pico 
 <!-- <img src="./images/duo_placement.JPG"> -->
 <!-- <img src="./images/duo_solder.JPG"> -->
 <!-- <img src="./images/drone_frame.JPG"> -->
+
+**Cloud**
+
+> Database
+> <img src="./images/database.png">
+
+> Database Rules
+> <img src="./images/database_rules.png">
+
+> VM Instance
+> <img src="./images/vm_instances.png">
+
+> Firewall Policies
+> <img src="./images/firewall_policies.png">
+
+> Authentication
+> <img src="./images/authentication.png">
